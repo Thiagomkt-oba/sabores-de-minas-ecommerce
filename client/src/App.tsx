@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Route, Switch } from 'wouter';
 import { CartProvider } from './context/CartContext';
 import Header from './components/Header';
 import Hero from './components/Hero';
@@ -53,8 +53,8 @@ const AppContent: React.FC = () => {
       {showCheckout ? (
         <Checkout onBack={handleBackToProduct} />
       ) : (
-        <Routes>
-          <Route path="/" element={
+        <Switch>
+          <Route path="/">
             <main>
               <Hero onCheckout={handleCheckout} />
               <ProductDetails onCheckout={handleCheckout} />
@@ -62,9 +62,11 @@ const AppContent: React.FC = () => {
               <Reviews />
               <Benefits />
             </main>
-          } />
-          <Route path="/checkout-pix" element={<CheckoutPix />} />
-        </Routes>
+          </Route>
+          <Route path="/checkout-pix">
+            <CheckoutPix />
+          </Route>
+        </Switch>
       )}
       
       <Footer />
