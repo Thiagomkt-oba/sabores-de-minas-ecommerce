@@ -306,7 +306,7 @@ const CheckoutPix: React.FC = () => {
                         <input
                           type="email"
                           value={formData.email}
-                          onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, email: e.target.value }))}
                           className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#9B6647] focus:border-transparent ${
                             errors.email ? 'border-red-500' : 'border-gray-300'
                           }`}
@@ -356,7 +356,7 @@ const CheckoutPix: React.FC = () => {
                           <input
                             type="text"
                             value={formData.numero}
-                            onChange={(e) => setFormData(prev => ({ ...prev, numero: e.target.value }))}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, numero: e.target.value }))}
                             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#9B6647] focus:border-transparent ${
                               errors.numero ? 'border-red-500' : 'border-gray-300'
                             }`}
@@ -373,7 +373,7 @@ const CheckoutPix: React.FC = () => {
                         <input
                           type="text"
                           value={formData.logradouro}
-                          onChange={(e) => setFormData(prev => ({ ...prev, logradouro: e.target.value }))}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, logradouro: e.target.value }))}
                           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9B6647] focus:border-transparent"
                           placeholder="Rua, Avenida, etc."
                         />
@@ -400,7 +400,7 @@ const CheckoutPix: React.FC = () => {
                           <input
                             type="text"
                             value={formData.complemento}
-                            onChange={(e) => setFormData(prev => ({ ...prev, complemento: e.target.value }))}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, complemento: e.target.value }))}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9B6647] focus:border-transparent"
                             placeholder="Apto, Casa, etc."
                           />
@@ -415,7 +415,7 @@ const CheckoutPix: React.FC = () => {
                           <input
                             type="text"
                             value={formData.cidade}
-                            onChange={(e) => setFormData(prev => ({ ...prev, cidade: e.target.value }))}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, cidade: e.target.value }))}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9B6647] focus:border-transparent"
                             placeholder="Cidade"
                           />
@@ -428,7 +428,7 @@ const CheckoutPix: React.FC = () => {
                           <input
                             type="text"
                             value={formData.estado}
-                            onChange={(e) => setFormData(prev => ({ ...prev, estado: e.target.value }))}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, estado: e.target.value }))}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#9B6647] focus:border-transparent"
                             placeholder="UF"
                             maxLength={2}
