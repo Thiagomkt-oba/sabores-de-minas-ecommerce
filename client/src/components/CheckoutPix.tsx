@@ -124,80 +124,42 @@ const CheckoutPix: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const testNetlifyFunction = async () => {
-    console.log('🧪 Testando função Netlify...');
-    try {
-      const response = await fetch('/.netlify/functions/test', {
-        method: 'GET',
-      });
-      
-      console.log('📥 Status do teste:', response.status);
-      const data = await response.text();
-      console.log('📥 Resposta do teste:', data);
-      
-      if (response.ok) {
-        alert('✅ Função Netlify funcionando! Verifique o console para detalhes.');
-      } else {
-        alert('❌ Erro na função Netlify. Verifique o console.');
-      }
-    } catch (error) {
-      console.error('❌ Erro ao testar função:', error);
-      alert('❌ Erro ao conectar com função Netlify');
-    }
-  };
-
   const handleGerarPix = async () => {
-    console.log('🚀 Iniciando geração do PIX...');
     setErrorMessage('');
     
     if (!validateForm()) {
-      console.log('❌ Formulário inválido');
       return;
     }
 
     setLoading(true);
     
     try {
-      // Preparar dados no formato esperado pela função serverless
-      const customerData = {
+      // Preparar dados para a API
+      const requestBody = {
         nome: formData.nome,
+        cpf: formData.cpf,
         email: formData.email,
         telefone: formData.telefone,
-        endereco: {
-          cep: formData.cep,
-          logradouro: formData.logradouro,
-          numero: formData.numero,
-          bairro: formData.bairro,
-          localidade: formData.cidade,
-          uf: formData.estado,
-          complemento: formData.complemento
-        }
-      };
-
-      const items = [
-        {
-          name: "Conjunto 3 Manteigas",
-          price: 69.90,
-          quantity: 1
-        }
-      ];
-
-      const requestBody = {
+        cep: formData.cep,
+        logradouro: formData.logradouro,
+        numero: formData.numero,
+        bairro: formData.bairro,
+        cidade: formData.cidade,
+        estado: formData.estado,
+        complemento: formData.complemento,
         amount: 69.90,
-        customerData,
-        items
+        items: [
+          {
+            unitPrice: 6990,
+            title: "Conjunto 3 Manteigas Sabores de Minas",
+            quantity: 1,
+            tangible: true
+          }
+        ]
       };
 
-      console.log('📦 Dados preparados:', requestBody);
-
-      // Primeiro testar se a função existe
-      console.log('🔍 Verificando se função existe...');
-      const testResponse = await fetch('/.netlify/functions/test');
-      console.log('🔍 Teste de função:', testResponse.status);
-
-      // Chamar a função serverless
-      console.log('📡 Fazendo requisição para função criarPix...');
-      const response = await fetch('/.netlify/functions/criarPix', {
+      // Chamar nossa API
+      const response = await fetch('/api/create-pix-payment', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -205,52 +167,26 @@ const CheckoutPix: React.FC = () => {
         body: JSON.stringify(requestBody)
       });
 
-      console.log('📥 Status da resposta:', response.status);
-      console.log('📥 Headers da resposta:', Object.fromEntries(response.headers.entries()));
-
-      const responseText = await response.text();
-      console.log('📥 Resposta bruta:', responseText);
-
-      if (!responseText) {
-        throw new Error('Resposta vazia da função serverless');
-      }
-
-      let data;
-      try {
-        data = JSON.parse(responseText);
-        console.log('📋 Dados parseados:', data);
-      } catch (parseError) {
-        console.error('❌ Erro ao fazer parse:', parseError);
-        throw new Error(`Resposta inválida da função serverless: ${responseText.substring(0, 100)}`);
-      }
+      const data = await response.json();
 
       if (!response.ok) {
-        console.error('❌ Erro na resposta:', data);
-        throw new Error(data.message || data.error || `Erro HTTP: ${response.status}`);
+        throw new Error(data.error || `Erro HTTP: ${response.status}`);
       }
 
-      if (data.success && (data.pixQrCode || data.pixCode)) {
-        console.log('✅ PIX gerado com sucesso:', data);
-
+      if (data.pixQrCode && data.pixCode) {
         setPixData({
           pixQrCode: data.pixQrCode,
           pixCode: data.pixCode,
           transactionId: data.transactionId,
           status: data.status
         });
-
-        // Simular verificação de pagamento
-        setTimeout(() => {
-          alert('Pagamento confirmado! Obrigado pela compra.');
-        }, 15000);
       } else {
-        console.error('❌ Resposta sem dados do PIX:', data);
-        throw new Error('Função serverless não retornou dados do PIX válidos');
+        throw new Error('Dados do PIX não foram retornados pela API');
       }
 
     } catch (error) {
-      console.error('❌ Erro ao gerar PIX:', error);
-      setErrorMessage(`Erro ao gerar PIX: ${error.message}`);
+      console.error('Erro ao gerar PIX:', error);
+      setErrorMessage(`Erro ao gerar PIX: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     } finally {
       setLoading(false);
     }
@@ -288,15 +224,7 @@ const CheckoutPix: React.FC = () => {
           Checkout PIX - Sabores de Minas
         </h1>
 
-        {/* Botão de Teste */}
-        <div className="mb-6 text-center">
-          <button
-            onClick={testNetlifyFunction}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
-          >
-            🧪 Testar Função Netlify
-          </button>
-        </div>
+
 
         {/* Mensagem de Erro */}
         {errorMessage && (
@@ -362,7 +290,7 @@ const CheckoutPix: React.FC = () => {
                         <InputMask
                           mask="(99) 99999-9999"
                           value={formData.telefone}
-                          onChange={(e) => setFormData(prev => ({ ...prev, telefone: e.target.value }))}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData(prev => ({ ...prev, telefone: e.target.value }))}
                           className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-[#9B6647] focus:border-transparent ${
                             errors.telefone ? 'border-red-500' : 'border-gray-300'
                           }`}
