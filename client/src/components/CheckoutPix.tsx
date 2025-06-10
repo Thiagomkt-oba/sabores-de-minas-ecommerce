@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Copy, CheckCircle, CreditCard, User, MapPin, Phone, Mail, Package, Clock, AlertCircle } from 'lucide-react';
 import InputMask from 'react-input-mask';
+import { useTracking } from '../hooks/useTracking';
 
 interface FormData {
   nome: string;
@@ -24,6 +25,8 @@ interface PixData {
 }
 
 const CheckoutPix: React.FC = () => {
+  const trackingParams = useTracking();
+  
   const [formData, setFormData] = useState<FormData>({
     nome: '',
     cpf: '',
@@ -134,7 +137,7 @@ const CheckoutPix: React.FC = () => {
     setLoading(true);
     
     try {
-      // Preparar dados para a API
+      // Preparar dados para a API incluindo parâmetros de tracking
       const requestBody = {
         nome: formData.nome,
         cpf: formData.cpf,
@@ -155,11 +158,22 @@ const CheckoutPix: React.FC = () => {
             quantity: 1,
             tangible: true
           }
-        ]
+        ],
+        trackingParams
       };
 
+      // Construir URL com parâmetros UTM para o backend
+      const urlParams = new URLSearchParams();
+      Object.entries(trackingParams).forEach(([key, value]) => {
+        if (value) {
+          urlParams.append(key, value);
+        }
+      });
+
+      const apiUrl = `/api/create-pix-payment${urlParams.toString() ? `?${urlParams.toString()}` : ''}`;
+
       // Chamar nossa API
-      const response = await fetch('/api/create-pix-payment', {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
