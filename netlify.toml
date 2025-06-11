@@ -1,19 +1,14 @@
 [build]
-  publish = "dist"
-  command = "npm run build:netlify"
+  publish = "netlify-deploy/dist"
+  command = "cd netlify-deploy && npm install && npm run build"
 
-[build.environment]
-  NODE_VERSION = "18"
-
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
+[functions]
+  directory = "netlify/functions"
 
 [[redirects]]
   from = "/*"
   to = "/index.html"
   status = 200
 
-[functions]
-  directory = "netlify/functions"
+[build.environment]
+  NODE_VERSION = "18"

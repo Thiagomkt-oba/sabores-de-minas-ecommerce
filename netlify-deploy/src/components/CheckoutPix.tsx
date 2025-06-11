@@ -170,9 +170,9 @@ const CheckoutPix: React.FC = () => {
         }
       });
 
-      const apiUrl = `/api/create-pix-payment${urlParams.toString() ? `?${urlParams.toString()}` : ''}`;
+      const apiUrl = `/.netlify/functions/create-pix-payment${urlParams.toString() ? `?${urlParams.toString()}` : ''}`;
 
-      // Chamar nossa API
+      // Chamar nossa função serverless do Netlify
       const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
