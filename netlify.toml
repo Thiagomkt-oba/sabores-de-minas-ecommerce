@@ -1,6 +1,6 @@
 [build]
   publish = "client/dist"
-  command = "npm install && npx vite build --config vite.config.netlify.ts --outDir client/dist"
+  command = "npm ci && cd client && npx vite build --outDir dist"
 
 [build.environment]
   NODE_VERSION = "18"
