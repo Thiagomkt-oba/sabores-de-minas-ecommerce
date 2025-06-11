@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Copy, CheckCircle, CreditCard, User, MapPin, Phone, Mail, Package, Clock, AlertCircle } from 'lucide-react';
+import { Copy, CheckCircle, CreditCard, User, MapPin, Package, Clock, AlertCircle } from 'lucide-react';
 import InputMask from 'react-input-mask';
 import { useTracking } from '../hooks/useTracking';
 

@@ -142,41 +142,66 @@ const Checkout: React.FC<CheckoutProps> = ({ onBack }) => {
   };
 
   const handlePix = async () => {
-    console.log('🚀 Simulando processo de PIX...');
-    
     if (!validateForm()) {
-      console.log('❌ Formulário inválido');
       return;
     }
 
     setLoading(true);
     
     try {
-      // Simular delay de processamento
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Simular dados do PIX para demonstração
-      const simulatedPixData: PixData = {
-        transactionId: `tx_${Date.now()}`,
-        pixQrCode: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
-        pixCode: '00020126580014br.gov.bcb.pix0136123e4567-e12b-12d1-a456-426614174000520400005303986540569.905802BR5925SABORES DE MINAS LTDA6009SAO PAULO62070503***6304ABCD',
+      const requestBody = {
+        nome: formData.nome,
+        cpf: '000.000.000-00', // CPF fictício para teste
+        email: formData.email,
+        telefone: formData.telefone,
+        cep: formData.endereco.cep,
+        logradouro: formData.endereco.logradouro,
+        numero: formData.endereco.numero,
+        bairro: formData.endereco.bairro,
+        cidade: formData.endereco.localidade,
+        estado: formData.endereco.uf,
+        complemento: formData.endereco.complemento,
         amount: totalPrice,
-        expiresAt: new Date(Date.now() + 30 * 60 * 1000).toISOString(),
-        status: 'pending'
+        items: [
+          {
+            unitPrice: Math.round(totalPrice * 100),
+            title: "Conjunto 3 Manteigas Sabores de Minas",
+            quantity: 1,
+            tangible: true
+          }
+        ]
       };
 
-      console.log('✅ PIX simulado gerado:', simulatedPixData);
-      setPixData(simulatedPixData);
-      
-      // Simular confirmação de pagamento após 15 segundos
-      setTimeout(() => {
-        setPaymentStatus('paid');
-        alert('Pagamento confirmado! Obrigado pela compra.');
-      }, 15000);
+      const response = await fetch('/api/create-pix-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || `Erro HTTP: ${response.status}`);
+      }
+
+      if (data.pixQrCode && data.pixCode) {
+        setPixData({
+          transactionId: data.transactionId,
+          pixQrCode: data.pixQrCode,
+          pixCode: data.pixCode,
+          amount: data.amount,
+          expiresAt: data.expiresAt,
+          status: data.status
+        });
+      } else {
+        throw new Error('Dados do PIX não foram retornados pela API');
+      }
 
     } catch (error) {
-      console.error('❌ Erro ao processar PIX:', error);
-      alert('Erro ao processar pagamento PIX. Tente novamente.');
+      console.error('Erro ao gerar PIX:', error);
+      alert(`Erro ao gerar PIX: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
     } finally {
       setLoading(false);
     }
@@ -553,7 +578,7 @@ const Checkout: React.FC<CheckoutProps> = ({ onBack }) => {
                     ) : (
                       <>
                         <CreditCard size={20} />
-                        Gerar PIX (Simulação)
+                        Gerar PIX
                       </>
                     )}
                   </button>
