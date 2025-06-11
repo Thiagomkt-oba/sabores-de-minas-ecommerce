@@ -468,12 +468,11 @@ const Checkout: React.FC<CheckoutProps> = ({ onBack }) => {
                     <div>
                       {pixData.pixQrCode && (
                         <div className="bg-white border-2 border-gray-200 rounded-lg p-4 mb-4 inline-block">
-                          <div className="w-64 h-64 bg-gray-100 rounded-lg flex items-center justify-center">
-                            <p className="text-gray-500 text-center">
-                              QR Code PIX<br />
-                              (Simulação)
-                            </p>
-                          </div>
+                          <img 
+                            src={pixData.pixQrCode} 
+                            alt="QR Code PIX" 
+                            className="w-64 h-64 rounded-lg"
+                          />
                         </div>
                       )}
                       
@@ -587,9 +586,6 @@ const Checkout: React.FC<CheckoutProps> = ({ onBack }) => {
                 <div className="text-center text-xs text-gray-500">
                   <p>Pagamento 100% seguro</p>
                   <p>Seus dados estão protegidos</p>
-                  <p className="text-orange-600 mt-2">
-                    * Modo demonstração - PIX simulado
-                  </p>
                 </div>
               </div>
             </div>

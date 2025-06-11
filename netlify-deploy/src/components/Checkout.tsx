@@ -553,7 +553,7 @@ const Checkout: React.FC<CheckoutProps> = ({ onBack }) => {
                     ) : (
                       <>
                         <CreditCard size={20} />
-                        Gerar PIX (Simulação)
+                        Gerar PIX
                       </>
                     )}
                   </button>
@@ -563,7 +563,7 @@ const Checkout: React.FC<CheckoutProps> = ({ onBack }) => {
                   <p>Pagamento 100% seguro</p>
                   <p>Seus dados estão protegidos</p>
                   <p className="text-orange-600 mt-2">
-                    * Modo demonstração - PIX simulado
+                    Pagamento processado com segurança
                   </p>
                 </div>
               </div>
