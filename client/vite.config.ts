@@ -11,11 +11,15 @@ export default defineConfig({
       "@assets": path.resolve(__dirname, "../attached_assets"),
     },
   },
+  css: {
+    postcss: './postcss.config.js',
+  },
   build: {
     outDir: "dist",
     emptyOutDir: true,
     sourcemap: false,
     minify: true,
+    cssCodeSplit: false,
   },
   base: "/",
 });
