@@ -1,13 +1,43 @@
 exports.handler = async (event, context) => {
+  // Add CORS headers
+  const headers = {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Content-Type": "application/json"
+  };
+
+  // Handle OPTIONS request (CORS preflight)
+  if (event.httpMethod === 'OPTIONS') {
+    return {
+      statusCode: 200,
+      headers,
+      body: ''
+    };
+  }
+
   // Only allow POST requests
   if (event.httpMethod !== 'POST') {
     return {
       statusCode: 405,
+      headers,
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
 
   try {
+    // Parse and validate request body
+    let requestBody;
+    try {
+      requestBody = JSON.parse(event.body || '{}');
+    } catch (parseError) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({ error: 'Invalid JSON in request body' })
+      };
+    }
+
     const {
       nome,
       cpf,
@@ -22,12 +52,13 @@ exports.handler = async (event, context) => {
       complemento,
       items,
       amount
-    } = JSON.parse(event.body);
+    } = requestBody;
 
     // Validate required fields
     if (!nome || !cpf || !email || !telefone || !amount) {
       return {
         statusCode: 400,
+        headers,
         body: JSON.stringify({
           error: "Campos obrigatórios: nome, cpf, email, telefone, amount"
         })
@@ -38,7 +69,74 @@ exports.handler = async (event, context) => {
     const cleanCpf = cpf.replace(/[.-]/g, '');
     const cleanPhone = telefone.replace(/\D/g, '');
 
-    // Prepare payment data for For4Payments API
+    // Check if we have API credentials configured
+    const hasApiKey = process.env.MERCADOPAGO_ACCESS_TOKEN || process.env.FOR4PAYMENTS_API_KEY;
+    
+    if (!hasApiKey) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          error: "API de pagamento não configurada",
+          message: "Configure as credenciais MERCADOPAGO_ACCESS_TOKEN ou FOR4PAYMENTS_API_KEY nas variáveis de ambiente do Netlify"
+        })
+      };
+    }
+
+    // If we have Mercado Pago credentials, use them
+    if (process.env.MERCADOPAGO_ACCESS_TOKEN) {
+      const mercadoPagoData = {
+        transaction_amount: amount,
+        description: "Conjunto 3 Manteigas Sabores de Minas",
+        payment_method_id: "pix",
+        payer: {
+          email: email,
+          identification: {
+            type: "CPF",
+            number: cleanCpf
+          }
+        }
+      };
+
+      const mpResponse = await fetch("https://api.mercadopago.com/v1/payments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${process.env.MERCADOPAGO_ACCESS_TOKEN}`
+        },
+        body: JSON.stringify(mercadoPagoData)
+      });
+
+      if (!mpResponse.ok) {
+        const errorData = await mpResponse.text();
+        console.error("Mercado Pago API Error:", errorData);
+        return {
+          statusCode: 400,
+          headers,
+          body: JSON.stringify({
+            error: "Erro ao processar pagamento com Mercado Pago",
+            details: errorData
+          })
+        };
+      }
+
+      const mpPixData = await mpResponse.json();
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          transactionId: mpPixData.id,
+          pixQrCode: mpPixData.point_of_interaction?.transaction_data?.qr_code_base64 || "",
+          pixCode: mpPixData.point_of_interaction?.transaction_data?.qr_code || "",
+          amount: amount,
+          expiresAt: mpPixData.date_of_expiration,
+          status: mpPixData.status
+        })
+      };
+    }
+
+    // Legacy For4Payments code (if configured)
     const paymentData = {
       name: nome,
       email: email,
@@ -64,7 +162,6 @@ exports.handler = async (event, context) => {
       postbackUrl: null
     };
 
-    // Call For4Payments API
     const response = await fetch("https://app.for4payments.com.br/api/v1/transaction.purchase", {
       method: "POST",
       headers: {
@@ -79,6 +176,7 @@ exports.handler = async (event, context) => {
       console.error("For4Payments API Error:", errorData);
       return {
         statusCode: 400,
+        headers,
         body: JSON.stringify({
           error: "Erro ao processar pagamento",
           details: errorData
