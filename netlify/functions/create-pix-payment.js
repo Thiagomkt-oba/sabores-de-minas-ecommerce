@@ -69,74 +69,19 @@ exports.handler = async (event, context) => {
     const cleanCpf = cpf.replace(/[.-]/g, '');
     const cleanPhone = telefone.replace(/\D/g, '');
 
-    // Check if we have API credentials configured
-    const hasApiKey = process.env.MERCADOPAGO_ACCESS_TOKEN || process.env.FOR4PAYMENTS_API_KEY;
-    
-    if (!hasApiKey) {
+    // Check if we have For4Payments API credentials configured
+    if (!process.env.FOR4PAYMENTS_API_KEY) {
       return {
         statusCode: 400,
         headers,
         body: JSON.stringify({
           error: "API de pagamento não configurada",
-          message: "Configure as credenciais MERCADOPAGO_ACCESS_TOKEN ou FOR4PAYMENTS_API_KEY nas variáveis de ambiente do Netlify"
+          message: "Configure a variável FOR4PAYMENTS_API_KEY nas environment variables do Netlify"
         })
       };
     }
 
-    // If we have Mercado Pago credentials, use them
-    if (process.env.MERCADOPAGO_ACCESS_TOKEN) {
-      const mercadoPagoData = {
-        transaction_amount: amount,
-        description: "Conjunto 3 Manteigas Sabores de Minas",
-        payment_method_id: "pix",
-        payer: {
-          email: email,
-          identification: {
-            type: "CPF",
-            number: cleanCpf
-          }
-        }
-      };
-
-      const mpResponse = await fetch("https://api.mercadopago.com/v1/payments", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${process.env.MERCADOPAGO_ACCESS_TOKEN}`
-        },
-        body: JSON.stringify(mercadoPagoData)
-      });
-
-      if (!mpResponse.ok) {
-        const errorData = await mpResponse.text();
-        console.error("Mercado Pago API Error:", errorData);
-        return {
-          statusCode: 400,
-          headers,
-          body: JSON.stringify({
-            error: "Erro ao processar pagamento com Mercado Pago",
-            details: errorData
-          })
-        };
-      }
-
-      const mpPixData = await mpResponse.json();
-      
-      return {
-        statusCode: 200,
-        headers,
-        body: JSON.stringify({
-          transactionId: mpPixData.id,
-          pixQrCode: mpPixData.point_of_interaction?.transaction_data?.qr_code_base64 || "",
-          pixCode: mpPixData.point_of_interaction?.transaction_data?.qr_code || "",
-          amount: amount,
-          expiresAt: mpPixData.date_of_expiration,
-          status: mpPixData.status
-        })
-      };
-    }
-
-    // Legacy For4Payments code (if configured)
+    // Prepare For4Payments API request
     const paymentData = {
       name: nome,
       email: email,
@@ -162,29 +107,35 @@ exports.handler = async (event, context) => {
       postbackUrl: null
     };
 
+    console.log("Sending request to For4Payments with data:", JSON.stringify(paymentData, null, 2));
+
     const response = await fetch("https://app.for4payments.com.br/api/v1/transaction.purchase", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": process.env.FOR4PAYMENTS_API_KEY || ""
+        "Authorization": process.env.FOR4PAYMENTS_API_KEY
       },
       body: JSON.stringify(paymentData)
     });
 
+    console.log("For4Payments response status:", response.status);
+
     if (!response.ok) {
       const errorData = await response.text();
-      console.error("For4Payments API Error:", errorData);
+      console.error("For4Payments API Error:", response.status, errorData);
       return {
-        statusCode: 400,
+        statusCode: response.status,
         headers,
         body: JSON.stringify({
-          error: "Erro ao processar pagamento",
+          error: "Erro ao processar pagamento com For4Payments",
+          status: response.status,
           details: errorData
         })
       };
     }
 
     const pixData = await response.json();
+    console.log("For4Payments response data:", JSON.stringify(pixData, null, 2));
 
     // Prepare Utmify order data
     const urlParams = new URLSearchParams(event.rawQuery || '');
